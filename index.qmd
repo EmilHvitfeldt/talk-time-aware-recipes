@@ -1,0 +1,281 @@
+---
+format:
+  revealjs:
+    theme: [default, cinco.scss]
+    width: 1280
+    height: 720
+    code-line-numbers: false
+    multiplex: true
+echo: true
+---
+
+## time aware recipes {.theme-title1 .center}
+
+```{r}
+#| echo: false
+library(recipes)
+library(timerecipes)
+
+set.seed(1234)
+
+ames_time <- slice_sample(ames_time, prop = 1)
+```
+
+### May Open Source Demo
+
+## What is a recipe? {.theme-slide1}
+
+## What is a recipe? {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+## What is a recipe? {.theme-slide1}
+
+:::{.mono}
+[recipe(sale_price ~ ., data = ames_time)]{.yellow} |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+<br>
+
+[Start by calling `recipe()` to denote the data source and variables used]{.yellow}
+
+## What is a recipe? {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ [step_unknown]{.orange}(all_nominal_predictors()) |>  
+\ \ [step_other]{.orange}(all_nominal_predictors()) |>  
+\ \ [step_dummy]{.orange}(all_nominal_predictors()) |>  
+\ \ [step_date]{.orange}(date_sold, features = c("month", "dow", "week")) |>  
+\ \ [step_zv]{.orange}(all_predictors()) |>  
+\ \ [step_normalize]{.orange}(all_numeric_predictors())
+:::
+
+<br>
+
+[specifying what actions to take by adding `step_*()`s]{.orange}
+
+## What is a recipe? {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown([all_nominal_predictors()]{.red}) |>  
+\ \ step_other([all_nominal_predictors()]{.red}) |>  
+\ \ step_dummy([all_nominal_predictors()]{.red}) |>  
+\ \ step_date([date_sold]{.red}, features = c("month", "dow", "week")) |>  
+\ \ step_zv([all_predictors()]{.red}) |>  
+\ \ step_normalize([all_numeric_predictors()]{.red})
+:::
+<br>
+
+[using {tidyselect} and recipes specific selectors to denote affected variables]{.orange}
+
+## What is a recipe? {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, [features = c("month", "dow", "week")]{.green}) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+<br>
+
+[many steps have options to modify behavior]{.green}
+
+## What is a recipe? {.theme-slide1}
+
+:::{.mono}
+rec_spec <- recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+[recipes are can be used with {workflows} to "combine" it with a model]{.citron}
+
+:::{.mono}
+wf_spec <- workflow() |>  
+\ \ [add_recipe(rec_spec)]{.citron} |>  
+\ \ add_model(linear_reg())
+:::
+
+## recipes are estimated {.theme-slide2}
+
+Every preprocessing step in a recipe that involved  
+calculations uses the *training* set. For example:
+
+- Levels of a factor
+- Determination of zero-variance
+- Normalization
+- Feature extraction
+
+Once a a recipe is added to a workflow,  
+this occurs when `fit()` is called.
+
+## types of steps {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ [step_other(all_nominal_predictors())]{.blue} |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+[Levels not found in tranining data set are set to "unseen"]{.blue}
+
+## types of steps {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ [step_dummy(all_nominal_predictors())]{.blue} |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+[records which levels are seen in training data set]{.blue}
+
+## types of steps {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ [step_zv(all_predictors())]{.blue} |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+[records which variables had zero variance]{.blue}
+
+## types of steps {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ step_unknown(all_nominal_predictors()) |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ step_date(date_sold, features = c("month", "dow", "week")) |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ [step_normalize(all_numeric_predictors())]{.blue}
+:::
+
+[records mean and sd of variables]{.blue}
+
+## types of steps {.theme-slide1}
+
+:::{.mono}
+recipe(sale_price ~ ., data = ames_time) |>  
+\ \ [step_unknown(all_nominal_predictors())]{.pink} |>  
+\ \ step_other(all_nominal_predictors()) |>  
+\ \ step_dummy(all_nominal_predictors()) |>  
+\ \ [step_date(date_sold, features = c("month", "dow", "week"))]{.pink} |>  
+\ \ step_zv(all_predictors()) |>  
+\ \ step_normalize(all_numeric_predictors())
+:::
+
+[these steps provide static transformations, and could thus be done outside before the recipe]{.pink}
+
+## time aware calculations {.theme-slide3}
+
+- how much did the last house sold for?
+  - ever
+  - last month
+  - last week
+- how many houses were sold in the last month?
+  - in this neighborhood
+- how long since last house sale?
+  - of this type
+
+## "step_time_features" {.theme-slide4}
+
+```{r}
+rec_spec <- recipe(~ lot_area + lot_frontage + date_sold,
+                  data = ames_time) |>
+  step_time_features(lot_area, lot_frontage, 
+                     time = date_sold,
+                     features = list(max = max, mean = mean))
+```
+
+##
+
+```{r}
+#| echo: false
+rec_spec |>
+  prep() |>
+  bake(new_data = NULL) |>
+  slice(1:5) |>
+  knitr::kable()
+```
+
+## "step_time_features" {.theme-slide4}
+
+```{r}
+rec_spec <- recipe(~ lot_area + lot_frontage + date_sold + neighborhood,
+                  data = ames_time) |>
+  step_time_features(lot_area, lot_frontage, 
+                     time = date_sold, 
+                     group = neighborhood,
+                     features = list(max = max, mean = mean))
+```
+
+Using `group` argument
+
+##
+
+```{r}
+#| echo: false
+rec_spec |>
+  prep() |>
+  bake(new_data = NULL) |>
+  slice(1:5) |>
+  knitr::kable()
+```
+
+## limitless skies {.theme-slide1}
+
+Given this infrastructure, creating the right features are just a function away
+
+```{r}
+mean_last_10_values <- function(x, time, now) {
+  mean(x[1:10], na.rm = TRUE)
+}
+
+mean_last_week <- function(x, time, now) {
+  last_week <- difftime(now, time) <= 7
+  mean(x[last_week], na.rm = TRUE)
+}
+```
+
+## {.theme-slide4}
+
+- will work with very short-term future data
+  - not unlike other machine learning models
+
+- My future: have an idea for a {scales} inspired package to make aggregation functions easier
